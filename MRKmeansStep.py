@@ -33,9 +33,38 @@ class MRKmeansStep(MRJob):
         doc should be a list of words
         Words must be alphabeticaly ordered
 
-        The result should be always a value in the range [0,1]
+        The result should be always a value in the range [0,1] 
+        
+        JACCARD(A,B) = INTERSECTION(A,B) / ( UNION(A,B) -INTERSECTION(A,B) )
+        SUPOSARE QUE NO IMPORTA LA PROBABILITAT, HAURIA DE PREGUNTAR AL BEJAR
         """
-        return 1
+        #TO BE TESTED
+        union=0.
+        intersection=0.
+        i=0
+        j=0
+        while i< len(prot) and j< len(doc):
+            if prot[i][0] > doc[j]:
+                j+=1
+            elif prot[i][0] < doc[j]:
+                i+=1
+            else:
+                intersection+=1
+                i+=1
+                j+=1
+            #this happens regardless
+            union+=1
+            
+        #the elements that we didn't count must count for the union
+        if i< len(prot) :
+            union+= len(pro) - i
+        if j< len(doc):
+            union+= len(doc) - i
+            
+        #they have the same elements
+        if union==intersection:
+            return 1
+        return intersection/(union-intersection)
 
     def configure_options(self):
         """
@@ -99,6 +128,7 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
+        #entenc que haig de calcular freq de cada paraula que apareix als documents i dir el prototype fent promitjos, despres afegirlo a prototypes {}
 
         yield None, None
 
