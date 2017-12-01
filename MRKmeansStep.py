@@ -43,10 +43,11 @@ class MRKmeansStep(MRJob):
         intersection=0.
         i=0
         j=0
-        while i< len(prot) and j< len(doc):
-            if prot[i][0] > doc[j]:
+        docprot= sorted(prot.keys())
+        while i< len(docprot) and j< len(doc):
+            if docprot[i] > doc[j]:
                 j+=1
-            elif prot[i][0] < doc[j]:
+            elif docprot[i] < doc[j]:
                 i+=1
             else:
                 intersection+=1
@@ -56,8 +57,8 @@ class MRKmeansStep(MRJob):
             union+=1
             
         #the elements that we didn't count must count for the union
-        if i< len(prot) :
-            union+= len(pro) - i
+        if i< len(docprot) :
+            union+= len(docprot) - i
         if j< len(doc):
             union+= len(doc) - i
             
@@ -103,14 +104,18 @@ class MRKmeansStep(MRJob):
         # Each line is a string docid:wor1 word2 ... wordn
         doc, words = line.split(':')
         lwords = words.split()
-
-        #
-        # Compute map here
-        #
-
+        
+        maxSim = -1.0
+        bestCluster = None
+        for cluster in prototypes:
+            sim = jaccard(prototypes[cluster], lwords)
+            if sim > maxSim:
+                bestCluster = cluster
+                maxSim = sim
+        
         # Return pair key, value
-        yield None, None
-
+        yield bestCluster, lwords
+    
     def aggregate_prototype(self, key, values):
         """
         input is cluster and all the documents it has assigned
@@ -128,9 +133,19 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
-        #entenc que haig de calcular freq de cada paraula que apareix als documents i dir el prototype fent promitjos, despres afegirlo a prototypes {}
-
-        yield None, None
+        
+        prototype = defaultdict(float)
+        nDocs = 0
+        
+        for docWords in values:
+            for word in docWords:
+                prototype[word] += 1
+            nDocs += 1
+        
+        for word in prototype:
+            prototype[word] /= nDocs
+        
+        yield key, prototype
 
     def steps(self):
         return [MRStep(mapper_init=self.load_data, mapper=self.assign_prototype,

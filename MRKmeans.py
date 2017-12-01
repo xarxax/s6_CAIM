@@ -64,6 +64,8 @@ if __name__ == '__main__':
             for line in runner1.stream_output():
                 key, value = mr_job1.parse_output_line(line)
                 # You should store things here probably in a datastructure
+                print(key)
+                exit()
 
             # If your scripts returns the new assignments you could write them in a file here
 
