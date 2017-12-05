@@ -24,7 +24,52 @@ import argparse
 import os
 import time
 
-__author__ = 'bejar'
+__author__ = 'bejar et al.'
+
+def saveAssignments(i,assign):
+    f = open('assignments'+i+'.txt', 'w')
+    
+    clusters = sorted(assign)
+    for cluster in clusters:
+        docvec = ''
+        for docid in assign[cluster]:
+            docvec += (docid + ' ')  
+        f.write(cluster + ':' + docvec.encode('ascii','replace') + '\n')
+        
+    f.flush()
+    f.close()
+
+def savePrototypes(i,proto):
+    f = open('prototypes'+i+'.txt', 'w')
+    
+    clusters = sorted(proto)
+    for cluster in clusters:
+        words = sorted(proto[cluster])
+        wordvec = ''
+        for word in words:
+            wordvec += (word + '+%d ' % proto[cluster][word])  
+        f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
+        
+    f.flush()
+    f.close()
+
+def loadAssignments(i):
+    f = open('assignments'+i+'.txt', 'r')
+    
+    assign = dict()
+    for line in f:
+        cluster, docvec = line.split(':')
+        cp = []
+        for docid in docvec.split():
+            cp.append(docid)
+        assign[cluster] = cp
+    
+    return assign
+
+def equal(assign1, assign2):
+    for cluster in assign1:
+        if cmp(assign1[cluster],assign2[cluster]) != 0: return False
+    return True
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -62,16 +107,20 @@ if __name__ == '__main__':
             new_proto = {}
             # Process the results of the script, each line one results
             for line in runner1.stream_output():
-                key, value = mr_job1.parse_output_line(line)
+                cluster, (assignments, prototype) = mr_job1.parse_output_line(line)
                 # You should store things here probably in a datastructure
-                print(key)
-                exit()
-
+                new_assign[cluster] = assignments
+                new_proto[cluster] = prototype
+            
+            print(hello)
             # If your scripts returns the new assignments you could write them in a file here
-
             # You should store the new prototypes here for the next iteration
+            saveAssignments(i+1,new_assign)
+            savePrototypes(i+1,new_proto)
 
             # If you have saved the assignments, you can check if they have changed from the previous iteration
+            old_assign = loadAssignments(i)
+            nomove = equal(old_assign, new_assign)
 
         print("Time= %f seconds" % (time.time() - tinit))
 

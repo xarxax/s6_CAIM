@@ -21,7 +21,7 @@ from __future__ import division
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 
-__author__ = 'bejar'
+__author__ = 'bejar et al.'
 
 class MRKmeansStep(MRJob):
     prototypes = {}
@@ -114,7 +114,7 @@ class MRKmeansStep(MRJob):
                 maxSim = sim
         
         # Return pair key, value
-        yield bestCluster, lwords
+        yield bestCluster, (doc, lwords)
     
     def aggregate_prototype(self, key, values):
         """
@@ -134,18 +134,21 @@ class MRKmeansStep(MRJob):
         :return:
         """
         
+        assignments = []
         prototype = defaultdict(float)
         nDocs = 0
         
-        for docWords in values:
+        for docid, docWords in values:
+            assignments.append(docid)
             for word in docWords:
                 prototype[word] += 1
             nDocs += 1
         
+        assignments.sort()
         for word in prototype:
             prototype[word] /= nDocs
         
-        yield key, prototype
+        yield key, (assignments, prototype)
 
     def steps(self):
         return [MRStep(mapper_init=self.load_data, mapper=self.assign_prototype,
