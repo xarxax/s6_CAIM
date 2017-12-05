@@ -28,7 +28,7 @@ import time
 __author__ = 'bejar et al.'
 
 def saveAssignments(i,assign):
-    f = open('assignments'+i+'.txt', 'w')
+    f = open('assignments%d.txt' % i, 'w')
     
     clusters = sorted(assign)
     for cluster in clusters:
@@ -41,7 +41,7 @@ def saveAssignments(i,assign):
     f.close()
 
 def savePrototypes(i,proto):
-    f = open('prototypes'+i+'.txt', 'w')
+    f = open('prototypes%d.txt'% i, 'w')
     
     clusters = sorted(proto)
     for cluster in clusters:
@@ -103,7 +103,9 @@ if __name__ == '__main__':
         # Runs the script
         print('hello')
         with mr_job1.make_runner() as runner1:
+            print('running')
             runner1.run()
+            print('ran')
             new_assign = {}
             new_proto = {}
             # Process the results of the script, each line one results

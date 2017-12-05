@@ -28,11 +28,13 @@ import os
 
 __author__ = 'not bejar et al.'
 
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 class MRKmeansStep(MRJob):
     prototypes = {}
     
-    def eprint(*args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
+
 
     def jaccard(self, prot, doc):
         """
@@ -48,19 +50,20 @@ class MRKmeansStep(MRJob):
         """
         #TO BE TESTED
         
-        print('jacobo')
+        #eprint('jacobo')
+        #print (prot)
         union=0.
         intersection=0.
         i=0
         j=0
         docprot= prot
-        while i< len(docprot) and j< len(doc):
-            if docprot[i] > doc[j]:
+        while i< len(prot) and j< len(doc):
+            if prot[i][0] > doc[j]:
                 j+=1
-            elif docprot[i] < doc[j]:
+            elif prot[i][0] < doc[j]:
                 i+=1
             else:
-                intersection+=1
+                intersection+=prot[i][1]
                 i+=1
                 j+=1
             #this happens regardless
@@ -72,7 +75,7 @@ class MRKmeansStep(MRJob):
         if j< len(doc):
             union+= len(doc) - i
             
-        print('jacobo out')
+        #eprint('jacobo out %d  / % %d'  % intersection % union )
 
         #they have the same elements
         if union==intersection:
@@ -86,7 +89,7 @@ class MRKmeansStep(MRJob):
         :return:
         """
         
-        print('configure_opts')
+        #eprint('configure_opts')
         super(MRKmeansStep, self).configure_options()
         self.add_file_option('--prot')
 
@@ -96,7 +99,7 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
-        print('load_data')
+        #eprint('load_data')
         f = open(self.options.prot, 'r')
         for line in f:
             cluster, words = line.split(':')
@@ -117,7 +120,7 @@ class MRKmeansStep(MRJob):
         """
 
         # Each line is a string docid:wor1 word2 ... wordn
-        print('assign')
+        #eprint('assign')
 
         doc, words = line.split(':')
         lwords = words.split()
@@ -129,9 +132,11 @@ class MRKmeansStep(MRJob):
             if sim > maxSim:
                 bestCluster = cluster
                 maxSim = sim
-        
+                #eprint(bestCluster)
+                #eprint(sim)
+
         # Return pair key, value
-        print('assign out')
+        #eprint('assign out')
 
         yield bestCluster, [doc, lwords]
     
@@ -152,12 +157,13 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
-        print('agregate')
+        #eprint('agregate')
 
         assignments = []
         prototype =  defaultdict(float)
         nDocs = 0
-        
+        #print('values %d' %len(values))
+
         for [docid, docWords] in values:
             assignments.append(docid)
             for word in docWords:
@@ -169,7 +175,7 @@ class MRKmeansStep(MRJob):
         
         assignments.sort()
         prototype = prototype.items().sort()
-        print('agregate out')
+        #eprint('agregate out')
 
         yield key, (assignments, prototype)
 
