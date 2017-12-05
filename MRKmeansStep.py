@@ -21,6 +21,9 @@ from __future__ import division,print_function
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 import sys
+from collections import defaultdict
+
+import os
 
 
 __author__ = 'not bejar et al.'
@@ -31,8 +34,6 @@ class MRKmeansStep(MRJob):
     def eprint(*args, **kwargs):
         print(*args, file=sys.stderr, **kwargs)
 
-
-    print('hello')
     def jaccard(self, prot, doc):
         """
         Compute here the Jaccard similarity between  a prototype and a document
@@ -47,12 +48,12 @@ class MRKmeansStep(MRJob):
         """
         #TO BE TESTED
         
-        eprint('jacobo')
+        print('jacobo')
         union=0.
         intersection=0.
         i=0
         j=0
-        docprot= sorted(prot.keys())
+        docprot= prot
         while i< len(docprot) and j< len(doc):
             if docprot[i] > doc[j]:
                 j+=1
@@ -71,7 +72,7 @@ class MRKmeansStep(MRJob):
         if j< len(doc):
             union+= len(doc) - i
             
-        eprint('jacobo out')
+        print('jacobo out')
 
         #they have the same elements
         if union==intersection:
@@ -84,6 +85,8 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
+        
+        print('configure_opts')
         super(MRKmeansStep, self).configure_options()
         self.add_file_option('--prot')
 
@@ -93,7 +96,7 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
-        print('hello')
+        print('load_data')
         f = open(self.options.prot, 'r')
         for line in f:
             cluster, words = line.split(':')
@@ -114,23 +117,23 @@ class MRKmeansStep(MRJob):
         """
 
         # Each line is a string docid:wor1 word2 ... wordn
-        eprint('assign')
+        print('assign')
 
         doc, words = line.split(':')
         lwords = words.split()
         
         maxSim = -1.0
         bestCluster = None
-        for cluster in prototypes:
-            sim = jaccard(prototypes[cluster], lwords)
+        for cluster in self.prototypes:
+            sim = self.jaccard(self.prototypes[cluster], lwords)
             if sim > maxSim:
                 bestCluster = cluster
                 maxSim = sim
         
         # Return pair key, value
-        eprint('assign out')
+        print('assign out')
 
-        yield bestCluster, (doc, lwords)
+        yield bestCluster, [doc, lwords]
     
     def aggregate_prototype(self, key, values):
         """
@@ -149,23 +152,24 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
-        eprint('agregate')
+        print('agregate')
 
         assignments = []
-        prototype = defaultdict(float)
+        prototype =  defaultdict(float)
         nDocs = 0
         
-        for docid, docWords in values:
+        for [docid, docWords] in values:
             assignments.append(docid)
             for word in docWords:
                 prototype[word] += 1
             nDocs += 1
         
-        assignments.sort()
         for word in prototype:
             prototype[word] /= nDocs
         
-        eprint('agregate out')
+        assignments.sort()
+        prototype = prototype.items().sort()
+        print('agregate out')
 
         yield key, (assignments, prototype)
 
@@ -176,4 +180,11 @@ class MRKmeansStep(MRJob):
 
 
 if __name__ == '__main__':
-    MRKmeansStep.run()
+    cwd = os.getcwd()
+    mr_job1 = MRKmeansStep(args=['-r', 'local', 'documents.txt',
+                                     '--file', cwd + '/prototypes%d.txt' % 0,
+                                     '--prot', cwd + '/prototypes%d.txt' % 0,
+                                     '--jobconf', 'mapreduce.job.maps=%d' % 1,
+                                     '--jobconf', 'mapreduce.job.reduces=%d' % 1])
+    mr_job1.load_data()
+    mr_job1.run()

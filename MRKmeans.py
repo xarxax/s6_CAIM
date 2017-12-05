@@ -24,6 +24,7 @@ import argparse
 import os
 import time
 
+
 __author__ = 'bejar et al.'
 
 def saveAssignments(i,assign):
@@ -44,10 +45,9 @@ def savePrototypes(i,proto):
     
     clusters = sorted(proto)
     for cluster in clusters:
-        words = sorted(proto[cluster])
         wordvec = ''
-        for word in words:
-            wordvec += (word + '+%d ' % proto[cluster][word])  
+        for (word,freq) in proto[cluster]:
+            wordvec += (word + '+%d ' % freq)
         f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
         
     f.flush()
@@ -101,13 +101,14 @@ if __name__ == '__main__':
                                      '--jobconf', 'mapreduce.job.reduces=%d' % args.nreduces])
 
         # Runs the script
+        print('hello')
         with mr_job1.make_runner() as runner1:
             runner1.run()
             new_assign = {}
             new_proto = {}
             # Process the results of the script, each line one results
             for line in runner1.stream_output():
-                cluster, (assignments, prototype) = mr_job1.parse_output_line(line)
+                cluster, [assignments, prototype] = mr_job1.parse_output_line(line)
                 # You should store things here probably in a datastructure
                 new_assign[cluster] = assignments
                 new_proto[cluster] = prototype
@@ -123,7 +124,7 @@ if __name__ == '__main__':
 
         print("Time= %f seconds" % (time.time() - tinit))
 
-        if nomove:  # If there is no changes in two consecutive iteration we can stop
+        if nomove:  # If there is no changes in two consecutive iterations we can stop
             print("Algorithm converged")
             break
 
