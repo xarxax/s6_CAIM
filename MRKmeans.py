@@ -112,7 +112,6 @@ if __name__ == '__main__':
                 new_assign[cluster] = assignments
                 new_proto[cluster] = prototype
             
-            print(hello)
             # If your scripts returns the new assignments you could write them in a file here
             # You should store the new prototypes here for the next iteration
             saveAssignments(i+1,new_assign)

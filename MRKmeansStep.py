@@ -17,15 +17,22 @@ MRKmeansDef
 
 """
 
-from __future__ import division
+from __future__ import division,print_function
 from mrjob.job import MRJob
 from mrjob.step import MRStep
+import sys
 
-__author__ = 'bejar et al.'
+
+__author__ = 'not bejar et al.'
 
 class MRKmeansStep(MRJob):
     prototypes = {}
+    
+    def eprint(*args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
 
+
+    print('hello')
     def jaccard(self, prot, doc):
         """
         Compute here the Jaccard similarity between  a prototype and a document
@@ -35,10 +42,12 @@ class MRKmeansStep(MRJob):
 
         The result should be always a value in the range [0,1] 
         
-        JACCARD(A,B) = INTERSECTION(A,B) / ( UNION(A,B) -INTERSECTION(A,B) )
+        JACCARD(A,B) = INTERSECTION(A,B) /  UNION(A,B)
         SUPOSARE QUE NO IMPORTA LA PROBABILITAT, HAURIA DE PREGUNTAR AL BEJAR
         """
         #TO BE TESTED
+        
+        eprint('jacobo')
         union=0.
         intersection=0.
         i=0
@@ -62,10 +71,12 @@ class MRKmeansStep(MRJob):
         if j< len(doc):
             union+= len(doc) - i
             
+        eprint('jacobo out')
+
         #they have the same elements
         if union==intersection:
             return 1
-        return intersection/(union-intersection)
+        return intersection/union
 
     def configure_options(self):
         """
@@ -82,6 +93,7 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
+        print('hello')
         f = open(self.options.prot, 'r')
         for line in f:
             cluster, words = line.split(':')
@@ -102,6 +114,8 @@ class MRKmeansStep(MRJob):
         """
 
         # Each line is a string docid:wor1 word2 ... wordn
+        eprint('assign')
+
         doc, words = line.split(':')
         lwords = words.split()
         
@@ -114,6 +128,8 @@ class MRKmeansStep(MRJob):
                 maxSim = sim
         
         # Return pair key, value
+        eprint('assign out')
+
         yield bestCluster, (doc, lwords)
     
     def aggregate_prototype(self, key, values):
@@ -133,7 +149,8 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
-        
+        eprint('agregate')
+
         assignments = []
         prototype = defaultdict(float)
         nDocs = 0
@@ -148,6 +165,8 @@ class MRKmeansStep(MRJob):
         for word in prototype:
             prototype[word] /= nDocs
         
+        eprint('agregate out')
+
         yield key, (assignments, prototype)
 
     def steps(self):
