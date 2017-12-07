@@ -61,7 +61,7 @@ def savePrototypes2(i,proto):
     for cluster in proto:
         wordvec = ''
         for [word,freq] in proto[cluster]:
-            wordvec += (word + '+%d ' % freq)
+            wordvec += (word + '+%f ' % freq)
         f.write(cluster+ ':' + wordvec.encode('ascii','replace') + '\n')
         
     f.flush()

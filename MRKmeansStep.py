@@ -56,7 +56,6 @@ class MRKmeansStep(MRJob):
         intersection=0.
         i=0
         j=0
-        docprot= prot
         while i< len(prot) and j< len(doc):
             if prot[i][0] > doc[j]:
                 j+=1
@@ -70,8 +69,8 @@ class MRKmeansStep(MRJob):
             union+=1
             
         #the elements that we didn't count must count for the union
-        if i< len(docprot) :
-            union+= len(docprot) - i
+        if i< len(prot) :
+            union+= len(prot) - i
         if j< len(doc):
             union+= len(doc) - i
             
@@ -107,6 +106,7 @@ class MRKmeansStep(MRJob):
             for word in words.split():
                 cp.append((word.split('+')[0], float(word.split('+')[1])))
             self.prototypes[cluster] = cp
+        
 
     def assign_prototype(self, _, line):
         """
