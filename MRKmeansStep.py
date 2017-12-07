@@ -26,16 +26,15 @@ from collections import defaultdict
 import os
 
 
-__author__ = 'not bejar et al.'
+__author__ = 'bejar et al.'
 
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def eprint(line):
+    with open('/tmp/MRKmeansStep.log', 'a') as f:
+        f.write(line + '\n')
+    
 class MRKmeansStep(MRJob):
     prototypes = {}
     
-
-
     def jaccard(self, prot, doc):
         """
         Compute here the Jaccard similarity between  a prototype and a document
@@ -89,9 +88,10 @@ class MRKmeansStep(MRJob):
         :return:
         """
         
-        #eprint('configure_opts')
+        #eprint('\nconfigure_opts')
         super(MRKmeansStep, self).configure_options()
         self.add_file_option('--prot')
+        #eprint('configure_opts out')
 
     def load_data(self):
         """
@@ -104,18 +104,18 @@ class MRKmeansStep(MRJob):
         for line in f:
             cluster, words = line.split(':')
             cp = []
+            #eprint('cluster %s, words %d' % (str(cluster),len(words)))
             for word in words.split():
                 cp.append((word.split('+')[0], float(word.split('+')[1])))
             self.prototypes[cluster] = cp
+        f.close()
+        #eprint('load_data out')
 
     def assign_prototype(self, _, line):
         """
         This is the mapper it should compute the closest prototype to a document
-
         Words should be sorted alphabetically in the prototypes and the documents
-
         This function has to return at list of pairs (prototype_id, document words)
-
         You can add also more elements to the value element, for example the document_id
         """
 
@@ -128,6 +128,7 @@ class MRKmeansStep(MRJob):
         maxSim = -1.0
         bestCluster = None
         for cluster in self.prototypes:
+            #eprint('prototype %d: %d' % cluster, len(self.prototypes[cluster]))
             sim = self.jaccard(self.prototypes[cluster], lwords)
             if sim > maxSim:
                 bestCluster = cluster
@@ -174,10 +175,11 @@ class MRKmeansStep(MRJob):
             prototype[word] /= nDocs
         
         assignments.sort()
-        prototype = prototype.items().sort()
+        prototype = prototype.items()
+        prototype.sort()
         #eprint('agregate out')
-
-        yield key, (assignments, prototype)
+        
+        yield key, [assignments, prototype]
 
     def steps(self):
         return [MRStep(mapper_init=self.load_data, mapper=self.assign_prototype,
@@ -186,11 +188,4 @@ class MRKmeansStep(MRJob):
 
 
 if __name__ == '__main__':
-    cwd = os.getcwd()
-    mr_job1 = MRKmeansStep(args=['-r', 'local', 'documents.txt',
-                                     '--file', cwd + '/prototypes%d.txt' % 0,
-                                     '--prot', cwd + '/prototypes%d.txt' % 0,
-                                     '--jobconf', 'mapreduce.job.maps=%d' % 1,
-                                     '--jobconf', 'mapreduce.job.reduces=%d' % 1])
-    mr_job1.load_data()
-    mr_job1.run()
+    MRKmeansStep.run()

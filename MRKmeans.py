@@ -18,7 +18,7 @@ MRKmeans
 """
 from __future__ import print_function, division
 
-from MRKmeansStep import MRKmeansStep
+from MRKmeansStep import MRKmeansStep,eprint
 import shutil
 import argparse
 import os
@@ -47,14 +47,14 @@ def savePrototypes(i,proto):
     for cluster in clusters:
         wordvec = ''
         for (word,freq) in proto[cluster]:
-            wordvec += (word + '+%d ' % freq)
+            wordvec += (word + '+%f ' % freq)
         f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
         
     f.flush()
     f.close()
 
 def loadAssignments(i):
-    f = open('assignments'+i+'.txt', 'r')
+    f = open('assignments%d.txt' %i, 'r')
     
     assign = dict()
     for line in f:
@@ -63,6 +63,7 @@ def loadAssignments(i):
         for docid in docvec.split():
             cp.append(docid)
         assign[cluster] = cp
+    f.close()
     
     return assign
 
@@ -121,13 +122,15 @@ if __name__ == '__main__':
             savePrototypes(i+1,new_proto)
 
             # If you have saved the assignments, you can check if they have changed from the previous iteration
-            old_assign = loadAssignments(i)
-            nomove = equal(old_assign, new_assign)
+            if i > 0:
+                old_assign = loadAssignments(i)
+                nomove = equal(old_assign, new_assign)
 
         print("Time= %f seconds" % (time.time() - tinit))
 
         if nomove:  # If there is no changes in two consecutive iterations we can stop
             print("Algorithm converged")
             break
+        #eprint('iteration %d end' % i)
 
     # Now the last prototype file should have the results
