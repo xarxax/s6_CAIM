@@ -46,6 +46,7 @@ def savePrototypes(i,proto):
     clusters = sorted(proto)
     for cluster in clusters:
         wordvec = ''
+        print()
         for (word,freq) in proto[cluster]:
             wordvec += (word + '+%d ' % freq)
         f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
@@ -53,8 +54,22 @@ def savePrototypes(i,proto):
     f.flush()
     f.close()
 
+
+def savePrototypes2(i,proto):
+    f = open('prototypes%d.txt'% i, 'w')
+    
+    for cluster in proto:
+        wordvec = ''
+        for [word,freq] in proto[cluster]:
+            wordvec += (word + '+%d ' % freq)
+        f.write(cluster+ ':' + wordvec.encode('ascii','replace') + '\n')
+        
+    f.flush()
+    f.close()
+
+
 def loadAssignments(i):
-    f = open('assignments'+i+'.txt', 'r')
+    f = open('assignments%d.txt' % i, 'r')
     
     assign = dict()
     for line in f:
@@ -68,7 +83,7 @@ def loadAssignments(i):
 
 def equal(assign1, assign2):
     for cluster in assign1:
-        if cmp(assign1[cluster],assign2[cluster]) != 0: return False
+        if assign1[cluster] != assign2[cluster]: return False
     return True
 
 if __name__ == '__main__':
@@ -108,21 +123,27 @@ if __name__ == '__main__':
             print('ran')
             new_assign = {}
             new_proto = {}
+            old_proto ={}
             # Process the results of the script, each line one results
             for line in runner1.stream_output():
-                cluster, [assignments, prototype] = mr_job1.parse_output_line(line)
+                #cluster, [assignments, prototype] = mr_job1.parse_output_line(line)
+                cluster,prototype = mr_job1.parse_output_line(line)
+                #print(type(yiel))
+                #print('iter',i,'cluster',cluster)
                 # You should store things here probably in a datastructure
-                new_assign[cluster] = assignments
+                #new_assign[cluster] = assignments
                 new_proto[cluster] = prototype
-            
             # If your scripts returns the new assignments you could write them in a file here
             # You should store the new prototypes here for the next iteration
-            saveAssignments(i+1,new_assign)
-            savePrototypes(i+1,new_proto)
+            #saveAssignments(i+1,new_assign)
+            print(new_proto)
+            savePrototypes2(i+1,new_proto)
 
             # If you have saved the assignments, you can check if they have changed from the previous iteration
-            old_assign = loadAssignments(i)
-            nomove = equal(old_assign, new_assign)
+            #old_assign = loadAssignments(i)
+            nomove = new_proto == old_proto
+            old_proto=new_proto
+            
 
         print("Time= %f seconds" % (time.time() - tinit))
 

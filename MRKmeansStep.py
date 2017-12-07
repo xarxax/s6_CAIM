@@ -173,11 +173,12 @@ class MRKmeansStep(MRJob):
         for word in prototype:
             prototype[word] /= nDocs
         
-        assignments.sort()
-        prototype = prototype.items().sort()
+        #assignments.sort()
+        #prototype = prototype.items()
+        #sorted(prototype)
         #eprint('agregate out')
-
-        yield key, (assignments, prototype)
+        
+        yield key, prototype.items()#(assignments, prototype)
 
     def steps(self):
         return [MRStep(mapper_init=self.load_data, mapper=self.assign_prototype,
