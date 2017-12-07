@@ -24,53 +24,21 @@ import argparse
 import os
 import time
 
+__author__ = 'bejar'
 
-__author__ = 'bejar et al.'
 
-def saveAssignments(i,assign):
-    f = open('assignments%d.txt' % i, 'w')
-    
-    clusters = sorted(assign)
-    for cluster in clusters:
-        docvec = ''
-        for docid in assign[cluster]:
-            docvec += (docid + ' ')  
-        f.write(cluster + ':' + docvec.encode('ascii','replace') + '\n')
-        
-    f.flush()
-    f.close()
-
-def savePrototypes(i,proto):
+def savePrototypes(i,key,proto):
     f = open('prototypes%d.txt'% i, 'w')
-    
-    clusters = sorted(proto)
-    for cluster in clusters:
-        wordvec = ''
-        for (word,freq) in proto[cluster]:
-            wordvec += (word + '+%d ' % freq)
-        f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
+    wordvec = str(key) + ':'
+    for word,freq in proto:
+        wordvec += (word + '+%f ' % freq)
+    f.write( wordvec.encode('ascii','replace') + '\n')
         
     f.flush()
     f.close()
-
-def loadAssignments(i):
-    f = open('assignments'+i+'.txt', 'r')
     
-    assign = dict()
-    for line in f:
-        cluster, docvec = line.split(':')
-        cp = []
-        for docid in docvec.split():
-            cp.append(docid)
-        assign[cluster] = cp
     
-    return assign
-
-def equal(assign1, assign2):
-    for cluster in assign1:
-        if cmp(assign1[cluster],assign2[cluster]) != 0: return False
-    return True
-
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--prot', default='prototypes.txt', help='Initial prototpes file')
@@ -101,32 +69,29 @@ if __name__ == '__main__':
                                      '--jobconf', 'mapreduce.job.reduces=%d' % args.nreduces])
 
         # Runs the script
-        print('hello')
         with mr_job1.make_runner() as runner1:
             print('running')
             runner1.run()
             print('ran')
             new_assign = {}
             new_proto = {}
+            old_proto = {}
             # Process the results of the script, each line one results
             for line in runner1.stream_output():
-                cluster, [assignments, prototype] = mr_job1.parse_output_line(line)
+                key, new_proto = mr_job1.parse_output_line(line)
                 # You should store things here probably in a datastructure
-                new_assign[cluster] = assignments
-                new_proto[cluster] = prototype
-            
+                
+
             # If your scripts returns the new assignments you could write them in a file here
+
             # You should store the new prototypes here for the next iteration
-            saveAssignments(i+1,new_assign)
-            savePrototypes(i+1,new_proto)
-
+            savePrototypes(i+1,key, new_proto)
             # If you have saved the assignments, you can check if they have changed from the previous iteration
-            old_assign = loadAssignments(i)
-            nomove = equal(old_assign, new_assign)
-
+            nomove= new_proto == old_proto
+            old_proto =new_proto
         print("Time= %f seconds" % (time.time() - tinit))
-
-        if nomove:  # If there is no changes in two consecutive iterations we can stop
+        
+        if nomove:  # If there is no changes in two consecutive iteration we can stop
             print("Algorithm converged")
             break
 
