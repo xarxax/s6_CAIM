@@ -119,7 +119,6 @@ class MRKmeansStep(MRJob):
                 maxSim = sim
 
         # Return pair key, value
-        #eprint('assign out')
 
         yield bestCluster, [doc, lwords]
 
