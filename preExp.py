@@ -1,3 +1,6 @@
+# this was a failed experiment T_T
+# first step creates files documents.txt, vocabulary.txt but won't write to them.
+
 from __future__ import print_function, division
 import argparse
 import os
@@ -24,15 +27,12 @@ if __name__ == '__main__':
 
     command = 'python %s/ExtractData.py --index %s --minfreq %d --maxfreq %d --numwords %d' % (cwd,args.index,args.minfreq,args.maxfreq,args.numwords)
     p = sp.Popen(args=command, shell=True, cwd=dirname)
-    time.sleep(10)
-    (output, err) = p.communicate()
     p_status = p.wait()
-    print(output,err,p_status)
+    print(p_status)
     
-    '''
     nclusts = map(int,args.nclusts.split())
     for nclust in nclusts:
         command = 'python %s/GeneratePrototypes.py --nclust %d' % (cwd,nclust)
-        sp.Popen(sp.Popen(args=command, shell=True, cwd=dirname))
+        p = sp.Popen(sp.Popen(args=command, shell=True, cwd=dirname))
+        p_status = p.wait()
         os.rename(dirname+'/prototypes.txt', dirname+'/prototypes%d.txt') % nclust
-    '''
