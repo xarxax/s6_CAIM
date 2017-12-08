@@ -6,14 +6,14 @@ MRKmeansDef
 
 :Description: MRKmeansDef
 
-    
+
 
 :Authors: bejar
-    
 
-:Version: 
 
-:Created on: 17/07/2017 7:42 
+:Version:
+
+:Created on: 17/07/2017 7:42
 
 """
 
@@ -31,10 +31,10 @@ __author__ = 'bejar et al.'
 def eprint(line):
     with open('/tmp/MRKmeansStep.log', 'a') as f:
         f.write(line + '\n')
-    
+
 class MRKmeansStep(MRJob):
     prototypes = {}
-    
+
     def jaccard(self, prot, doc):
         """
         Compute here the Jaccard similarity between  a prototype and a document
@@ -42,15 +42,8 @@ class MRKmeansStep(MRJob):
         doc should be a list of words
         Words must be alphabeticaly ordered
 
-        The result should be always a value in the range [0,1] 
-        
-        JACCARD(A,B) = INTERSECTION(A,B) /  UNION(A,B)
-        SUPOSARE QUE NO IMPORTA LA PROBABILITAT, HAURIA DE PREGUNTAR AL BEJAR
+        The result should be always a value in the range [0,1]
         """
-        #TO BE TESTED
-        
-        #eprint('jacobo')
-        #print (prot)
         union=0.
         intersection=0.
         i=0
@@ -67,14 +60,12 @@ class MRKmeansStep(MRJob):
                 j+=1
             #this happens regardless
             union+=1
-            
+
         #the elements that we didn't count must count for the union
         if i< len(docprot) :
             union+= len(docprot) - i
         if j< len(doc):
             union+= len(doc) - i
-            
-        #eprint('jacobo out %d  / % %d'  % intersection % union )
 
         #they have the same elements
         if union==intersection:
@@ -87,11 +78,9 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
-        
-        #eprint('\nconfigure_opts')
+
         super(MRKmeansStep, self).configure_options()
         self.add_file_option('--prot')
-        #eprint('configure_opts out')
 
     def load_data(self):
         """
@@ -99,17 +88,14 @@ class MRKmeansStep(MRJob):
 
         :return:
         """
-        #eprint('load_data')
         f = open(self.options.prot, 'r')
         for line in f:
             cluster, words = line.split(':')
             cp = []
-            #eprint('cluster %s, words %d' % (str(cluster),len(words)))
             for word in words.split():
                 cp.append((word.split('+')[0], float(word.split('+')[1])))
             self.prototypes[cluster] = cp
         f.close()
-        #eprint('load_data out')
 
     def assign_prototype(self, _, line):
         """
@@ -120,27 +106,23 @@ class MRKmeansStep(MRJob):
         """
 
         # Each line is a string docid:wor1 word2 ... wordn
-        #eprint('assign')
 
         doc, words = line.split(':')
         lwords = words.split()
-        
+
         maxSim = -1.0
         bestCluster = None
         for cluster in self.prototypes:
-            #eprint('prototype %d: %d' % cluster, len(self.prototypes[cluster]))
             sim = self.jaccard(self.prototypes[cluster], lwords)
             if sim > maxSim:
                 bestCluster = cluster
                 maxSim = sim
-                #eprint(bestCluster)
-                #eprint(sim)
 
         # Return pair key, value
         #eprint('assign out')
 
         yield bestCluster, [doc, lwords]
-    
+
     def aggregate_prototype(self, key, values):
         """
         input is cluster and all the documents it has assigned
@@ -158,27 +140,24 @@ class MRKmeansStep(MRJob):
         :param values:
         :return:
         """
-        #eprint('agregate')
 
         assignments = []
         prototype =  defaultdict(float)
         nDocs = 0
-        #print('values %d' %len(values))
 
         for [docid, docWords] in values:
             assignments.append(docid)
             for word in docWords:
                 prototype[word] += 1
             nDocs += 1
-        
+
         for word in prototype:
             prototype[word] /= nDocs
-        
+
         assignments.sort()
         prototype = prototype.items()
         prototype.sort()
-        #eprint('agregate out')
-        
+
         yield key, [assignments, prototype]
 
     def steps(self):

@@ -9,11 +9,11 @@ MRKmeans
     Iterates the MRKmeansStep script
 
 :Authors: bejar
-    
 
-:Version: 
 
-:Created on: 17/07/2017 10:16 
+:Version:
+
+:Created on: 17/07/2017 10:16
 
 """
 from __future__ import print_function, division
@@ -29,33 +29,33 @@ __author__ = 'bejar et al.'
 
 def saveAssignments(i,assign):
     f = open('assignments%d.txt' % i, 'w')
-    
+
     clusters = sorted(assign)
     for cluster in clusters:
         docvec = ''
         for docid in assign[cluster]:
-            docvec += (docid + ' ')  
+            docvec += (docid + ' ')
         f.write(cluster + ':' + docvec.encode('ascii','replace') + '\n')
-        
+
     f.flush()
     f.close()
 
 def savePrototypes(i,proto):
     f = open('prototypes%d.txt'% i, 'w')
-    
+
     clusters = sorted(proto)
     for cluster in clusters:
         wordvec = ''
         for (word,freq) in proto[cluster]:
             wordvec += (word + '+%f ' % freq)
         f.write(cluster + ':' + wordvec.encode('ascii','replace') + '\n')
-        
+
     f.flush()
     f.close()
 
 def loadAssignments(i):
     f = open('assignments%d.txt' %i, 'r')
-    
+
     assign = dict()
     for line in f:
         cluster, docvec = line.split(':')
@@ -64,7 +64,7 @@ def loadAssignments(i):
             cp.append(docid)
         assign[cluster] = cp
     f.close()
-    
+
     return assign
 
 def equal(assign1, assign2):
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 # You should store things here probably in a datastructure
                 new_assign[cluster] = assignments
                 new_proto[cluster] = prototype
-            
+
             # If your scripts returns the new assignments you could write them in a file here
             # You should store the new prototypes here for the next iteration
             saveAssignments(i+1,new_assign)
@@ -131,6 +131,5 @@ if __name__ == '__main__':
         if nomove:  # If there is no changes in two consecutive iterations we can stop
             print("Algorithm converged")
             break
-        #eprint('iteration %d end' % i)
 
     # Now the last prototype file should have the results
